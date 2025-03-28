@@ -18,11 +18,15 @@
   "homepage": "https://github.com/aaminhashemi/todo_frontend#readme",
   "description": "",
   "dependencies": {
+    "axios": "^1.8.4",
     "bootstrap": "^5.3.3",
     "css-loader": "^7.1.2",
+    "date-fns": "^4.1.0",
     "react": "^19.0.0",
+    "react-datepicker": "^8.2.1",
     "react-dom": "^19.0.0",
-    "style-loader": "^4.0.0"
+    "style-loader": "^4.0.0",
+    "sweetalert2": "^11.17.2"
   },
   "devDependencies": {
     "@babel/cli": "^7.27.0",
