@@ -11,7 +11,7 @@ function App() {
   const [selectedDate, setSelectedDate] = useState(null);
   useEffect(() => {
     axios
-      .get("http://127.0.0.1:8000/api/todo/list") // Replace with your Laravel API endpoint
+      .get("https://todo-backend-1-g56h.onrender.com/api/todo/list") // Replace with your Laravel API endpoint
       .then((response) => {
         setData(response.data.data); // Store data in state
         setLoading(false);
@@ -39,7 +39,7 @@ Swal.fire({
     showCancelButton: true,
 }).then(async(result) => {
      if (result.isConfirmed) {
-     const response1 = await axios.post("http://127.0.0.1:8000/api/todo/delete", {'id':id}, {
+     const response1 = await axios.post("https://todo-backend-1-g56h.onrender.com/api/todo/delete", {'id':id}, {
              headers: {
                "Content-Type": "application/json",
              },
@@ -65,7 +65,7 @@ Swal.fire({
     'title':formData.title,
     'due':selectedDate.toISOString().split("T")[0]
     }
-          const response = await axios.post("http://127.0.0.1:8000/api/todo/create", data, {
+          const response = await axios.post("https://todo-backend-1-g56h.onrender.com/api/todo/create", data, {
             headers: {
               "Content-Type": "application/json",
             },
