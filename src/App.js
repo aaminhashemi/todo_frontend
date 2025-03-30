@@ -64,7 +64,7 @@ Swal.fire({
     try {
     const data={
     'title':formData.title,
-    'due':selectedDate.toISOString().split("T")[0]
+    'due':selectedDate.toLocaleDateString('fa-IR')
     }
           const response = await axios.post("https://todo-backend-1-g56h.onrender.com/api/todo/create", data, {
             headers: {
