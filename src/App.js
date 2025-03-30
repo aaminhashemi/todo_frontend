@@ -8,7 +8,10 @@ function App() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [status, setStatus] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
+  const statuses=['pending','in-progress','completed'];
+  const [editingId, setEditingId] = useState(null);
   useEffect(() => {
     axios
       .get("https://todo-backend-1-g56h.onrender.com/api/todo/list") // Replace with your Laravel API endpoint
@@ -31,14 +34,14 @@ function App() {
   };
 const handleDelete=(id)=>{
 
-Swal.fire({
-  title: 'Danger!',
-  text: 'Do you want to delete this item?',
-  icon: 'error',
-  confirmButtonText: 'Yes',
-  cancelButtonText:'No!',
-    showCancelButton: true,
-}).then(async(result) => {
+    Swal.fire({
+      title: 'Danger!',
+      text: 'Do you want to delete this item?',
+      icon: 'error',
+      confirmButtonText: 'Yes',
+      cancelButtonText:'No!',
+        showCancelButton: true,
+    }).then(async(result) => {
      if (result.isConfirmed) {
      const response1 = await axios.post("https://todo-backend-1-g56h.onrender.com/api/todo/delete", {'id':id}, {
              headers: {
@@ -53,7 +56,50 @@ Swal.fire({
      }
    })
 }
-  const handleUpdate = async (e) => {
+  const handleEdit = async (id) => {
+  setEditingId(id);
+  }
+
+  const handleUpdate = async (id) => {
+  try {
+      const data={
+      'status':status,
+      'id':id
+      }
+            const response = await axios.post("https://todo-backend-1-g56h.onrender.com/api/todo/update", data, {
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+
+            console.log("Response:", response.data);
+             if (response.status==200) {
+                            setData((data) =>
+                                  data.map((item) =>
+                                    item.id === editingId ? { ...item, status: status } : item
+                                  )
+                                );
+                                setEditingId(null)
+                                Swal.fire({
+                                  title: 'Info!',
+                                  text: 'Todo status updated successfully',
+                                  icon: 'success',
+                                  confirmButtonText: 'OK!',
+                                })
+                        } else {
+                            Swal.fire({
+                              title: 'Info!',
+                              text: 'Todo status did not update',
+                              icon: 'error',
+                              confirmButtonText: 'OK!',
+                            })
+                        }
+
+
+          } catch (error) {
+            console.error("Error:", error);
+            alert("Failed to send data.");
+          }
   }
 
   const handleSubmit = async (e) => {
@@ -89,63 +135,80 @@ Swal.fire({
     }
 
   };
-  return (<div className="container">
-                <h1 className="text-center">Todo List Items</h1>
-                <form onSubmit={handleSubmit} className="form-inline d-flex">
-                  <div className="form-group mx-sm-3 mb-2">
-                    <input type="text" name="title"  value={formData.title} onChange={handleChange} className="form-control" id="inputTitle" placeholder="title" />
-                  </div> <div className="form-group mx-sm-3 mb-2">
-                    <DatePicker
-                            selected={selectedDate}
-                            onChange={handleDueChange}
-                            dateFormat="yyyy/MM/dd" // فرمت تاریخ (مثلاً 2025/03/28)
-                            className="form-control"
-                            name="due"
-                            autoComplete="off"
-          onKeyDown={(e) => {
-              e.preventDefault();
-          }}
-          onPaste={(e) => {
-              e.preventDefault();
-              setSelectedDate(null)
-          }}
-                          />
-                  </div>
-                  <button type="submit" className="btn btn-primary mb-2">Add</button>
-                </form>
-                <h1>Data from Laravel</h1>
+  return (
+  <div className="container mt-4">
+      <h1 className="text-center mb-4">Create new Todo</h1>
+      <form onSubmit={handleSubmit} className="form-inline d-flex justify-content-center mb-4">
+          <div className="form-group mx-2">
+              <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  className="form-control form-control-lg"
+                  id="inputTitle"
+                  placeholder="Task title"
+              />
+          </div>
+          <div className="form-group mx-2">
+              <DatePicker
+                  selected={selectedDate}
+                  onChange={handleDueChange}
+                  dateFormat="yyyy/MM/dd"
+                  className="form-control form-control-lg"
+                  name="due"
+                  placeholderText="Due date"
+                  autoComplete="off"
+                  onKeyDown={(e) => e.preventDefault()}
+                  onPaste={(e) => {
+                      e.preventDefault();
+                      setSelectedDate(null);
+                  }}
+              />
+          </div>
+          <button type="submit" className="btn btn-primary btn-lg mb-2">Add</button>
+      </form>
+      <h2 className="text-center mb-4">Todo list items</h2>
+      <table className="table table-bordered table-striped table-hover table-responsive-sm">
+          <thead className="thead-dark">
+              <tr>
+                  <th>#</th>
+                  <th>Title</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+              </tr>
+          </thead>
+          <tbody>
+              {data.map((item, index) => (
+                  <tr key={index}>
+                      <td>{index + 1}</td>
+                      <td>{item.title}</td>
+                      <td>{item.due}</td>
+                      <td>
+                      <select className="form-control" disabled={item.id !== editingId} onChange={(e) => setStatus(e.target.value)}>
+                        {statuses.map((status, index) => (
+                          <option key={index} value={status} selected={status === item.status}>{status}</option>
+                        ))}
+                      </select>
+                      </td>
+                      <td>
+                          <button className="btn btn-danger mx-2" onClick={() => handleDelete(item.id)}>
+                              Delete
+                          </button>
+                          <button className={editingId==item.id? 'btn btn-warning mx-2 d-none' : 'btn btn-warning mx-2 '} onClick={() => handleEdit(item.id)}>
+                              Edit
+                          </button>
+                          <button className={editingId==item.id? 'btn btn-success mx-2' : 'btn btn-warning mx-2 d-none'} onClick={() => handleUpdate(item.id)}>
+                              Update
+                          </button>
+                      </td>
+                  </tr>
+              ))}
+          </tbody>
+      </table>
+  </div>
 
-                      <table className="table table-bordered table-striped table-hover table-responsive">
-                                  <thead className="thead-dark">
-                                      <tr>
-                                          <th>#</th>
-                                          <th>Title</th>
-                                          <th>Due date</th>
-                                          <th>Status</th>
-                                          <th>Operation</th>
-                                      </tr>
-                                  </thead>
-                                  <tbody>
-                                  {data.map((item,index) => (
-                                      <tr key={index}>
-                                          <td>{index+1}</td>
-                                          <td>{item.title}</td>
-                                          <td>{item.due}</td>
-                                          <td>{item.status}</td>
-                                          <td>
-                                          <span className="btn btn-danger" onClick={() => handleDelete(item.id)}>
-                                          delete
-                                          </span>
-                                          <span className="btn btn-warning" onClick={() => handleUpdate(item.id)}>
-                                          delete
-                                          </span>
-                                          </td>
-                                      </tr>
-                                     ))}
-
-                                  </tbody>
-                              </table>
-              </div>
           );
 }
 
