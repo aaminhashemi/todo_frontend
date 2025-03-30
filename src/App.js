@@ -14,6 +14,7 @@ function App() {
       .get("https://todo-backend-1-g56h.onrender.com/api/todo/list") // Replace with your Laravel API endpoint
       .then((response) => {
         setData(response.data.data); // Store data in state
+        console.log(response.data)
         setLoading(false);
       })
       .catch((error) => {
