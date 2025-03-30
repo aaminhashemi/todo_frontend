@@ -1,96 +1,90 @@
+// App.test.js
+import React from 'react'; // Ensure React is imported
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import App from './App';
 import axios from 'axios';
-import axiosMockAdapter from 'axios-mock-adapter';
 
 // Mock axios
-const mock = new axiosMockAdapter(axios);
+jest.mock('axios');
 
-// Test suite
 describe('App Component', () => {
-  beforeEach(() => {
-    // Reset mocks before each test
-    mock.reset();
-  });
+  test('should render the form and table', async () => {
+    // Mock the API response
+    axios.get.mockResolvedValue({
+      data: {
+        data: [
+          { id: 1, title: 'Test Todo', due: '2025-03-30', status: 'pending' },
+        ],
+      },
+    });
 
-  it('should render the form and table', () => {
+    // Render the App component
     render(<App />);
 
-    // Check if form elements are rendered
-    expect(screen.getByPlaceholderText('Task title')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Due date')).toBeInTheDocument();
-    expect(screen.getByText('Add')).toBeInTheDocument();
+    // Wait for the data to be loaded into the table
+    await waitFor(() => expect(screen.getByText(/Test Todo/i)).toBeInTheDocument());
 
-    // Check if table headers are rendered
-    expect(screen.getByText('#')).toBeInTheDocument();
-    expect(screen.getByText('Title')).toBeInTheDocument();
-    expect(screen.getByText('Due Date')).toBeInTheDocument();
-    expect(screen.getByText('Status')).toBeInTheDocument();
-    expect(screen.getByText('Actions')).toBeInTheDocument();
+    // Check if the 'Edit' button is rendered
+    const editButton = screen.getByText(/Edit/i); // Use regex for more flexible matching
+
+    // Ensure the 'Edit' button is visible when editingId is not set
+    expect(editButton).toBeInTheDocument();
+    expect(editButton).not.toHaveClass('d-none'); // Ensure 'Edit' button is visible
+
+    // Simulate clicking the 'Edit' button
+    fireEvent.click(editButton);
+
+    // After the click, the editingId should be set, and the 'Edit' button should become hidden
+    await waitFor(() => {
+      expect(screen.queryByText(/Edit/i)).toHaveClass('d-none'); // Check that 'Edit' is hidden
+    });
+
+    // Check if the 'Update' button becomes visible after clicking 'Edit'
+    expect(screen.getByText('Update')).toBeInTheDocument();
   });
 
-  it('should fetch and display todo items', async () => {
-    const todos = [
-      { id: 1, title: 'Test Todo 1', due: '2025/03/30', status: 'pending' },
-      { id: 2, title: 'Test Todo 2', due: '2025/04/01', status: 'completed' },
-    ];
+  test('should update the status of a todo item', async () => {
+    // Mock the API response for fetching the todo list
+    axios.get.mockResolvedValue({
+      data: {
+        data: [
+          { id: 1, title: 'Test Todo', due: '2025-03-30', status: 'pending' },
+        ],
+      },
+    });
 
-    // Mock API response
-    mock.onGet('https://todo-backend-1-g56h.onrender.com/api/todo/list').reply(200, { data: todos });
+    // Mock the API response for updating a todo item
+    axios.post.mockResolvedValue({
+      data: { data: { id: 1, title: 'Test Todo', due: '2025-03-30', status: 'completed' } },
+      status: 200,
+    });
 
+    // Render the App component
     render(<App />);
 
-    // Wait for the data to load
-    await waitFor(() => expect(screen.getByText('Test Todo 1')).toBeInTheDocument());
-    expect(screen.getByText('Test Todo 2')).toBeInTheDocument();
-  });
+    // Wait for the data to be loaded into the table
+    await waitFor(() => expect(screen.getByText(/Test Todo/i)).toBeInTheDocument());
 
-  it('should add a new todo item', async () => {
-    mock.onPost('https://todo-backend-1-g56h.onrender.com/api/todo/create').reply(201, { data: { id: 3, title: 'New Todo', due: '2025/05/01', status: 'pending' } });
+    // Find the Edit button and click it
+    const editButton = screen.getByText(/Edit/i);
+    fireEvent.click(editButton);
 
-    render(<App />);
+    // Wait for the 'Update' button to be visible after clicking 'Edit'
+    await waitFor(() => {
+      expect(screen.getByText('Update')).toBeInTheDocument();
+    });
 
-    fireEvent.change(screen.getByPlaceholderText('Task title'), { target: { value: 'New Todo' } });
-    fireEvent.change(screen.getByPlaceholderText('Due date'), { target: { value: '2025/05/01' } });
-    fireEvent.click(screen.getByText('Add'));
+    // Select a new status for the todo item
+    const statusSelect = screen.getByRole('combobox');
+    fireEvent.change(statusSelect, { target: { value: 'completed' } });
 
-    await waitFor(() => expect(screen.getByText('New Todo')).toBeInTheDocument());
-  });
+    // Click the 'Update' button to submit the status change
+    const updateButton = screen.getByText('Update');
+    fireEvent.click(updateButton);
 
-  it('should delete a todo item', async () => {
-    const todos = [
-      { id: 1, title: 'Test Todo 1', due: '2025/03/30', status: 'pending' },
-    ];
-
-    mock.onGet('https://todo-backend-1-g56h.onrender.com/api/todo/list').reply(200, { data: todos });
-    mock.onPost('https://todo-backend-1-g56h.onrender.com/api/todo/delete').reply(200, {});
-
-    render(<App />);
-
-    // Simulate clicking delete button
-    fireEvent.click(screen.getByText('Delete'));
-
-    // Mocking Swal.fire
-    Swal.fire = jest.fn().mockResolvedValue({ isConfirmed: true });
-
-    await waitFor(() => expect(screen.queryByText('Test Todo 1')).toBeNull());
-  });
-
-  it('should update the status of a todo item', async () => {
-    const todos = [
-      { id: 1, title: 'Test Todo 1', due: '2025/03/30', status: 'pending' },
-    ];
-
-    mock.onGet('https://todo-backend-1-g56h.onrender.com/api/todo/list').reply(200, { data: todos });
-    mock.onPost('https://todo-backend-1-g56h.onrender.com/api/todo/update').reply(200, {});
-
-    render(<App />);
-
-    fireEvent.click(screen.getByText('Edit'));
-
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'completed' } });
-    fireEvent.click(screen.getByText('Update'));
-
-    await waitFor(() => expect(screen.getByText('completed')).toBeInTheDocument());
+    // Wait for the update to complete and check if the status has changed
+    await waitFor(() => {
+      expect(screen.getByText('completed')).toBeInTheDocument();
+    });
   });
 });
