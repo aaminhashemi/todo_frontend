@@ -30,7 +30,7 @@ You can visit the project online at: [https://todo-frontend-tmrg.onrender.com/](
     This command will start the React development server. Once it's running, for first usage it takes about 1 or 2 minutes for the online server to respond . Be patient please!
     
     Used online server is Free and has it's own limitations.
-    
+
     
 ## Puppeteer Testing
 
@@ -38,10 +38,11 @@ The project includes automated testing using **Puppeteer** to ensure functionali
    ```sh
    node puppeteer.test.js
    ```
+## CI/CD & GitHub Actions
+This project uses **GitHub Actions** to automate testing. The workflow file is located at:
+```
+.github/workflows/frontend.yml
+```
+You can view test results in the [Actions Tab](https://github.com/aaminhashemi/todo_frontend/actions).
 
-## Tech Stack
-
-- **Frontend**: React, Bootstrap
-- **Backend**: Laravel
-- **Database**: PostgreSQL
-
+---
