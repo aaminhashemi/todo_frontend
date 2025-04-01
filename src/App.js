@@ -6,6 +6,8 @@ import "react-datepicker/dist/react-datepicker.css";
 function App() {
   const [formData, setFormData] = useState({title:''});
   const [data, setData] = useState([]);
+  const [isFiltered,setIsFiltered]=useState(false)
+  const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [status, setStatus] = useState(null);
@@ -31,6 +33,15 @@ function App() {
   };
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  const handleSearch = (search) => {
+  if(search.length>0){
+        setIsFiltered(true);
+        setFilteredData(data.filter((item) =>item.title.toLowerCase().includes(search.toLowerCase())))
+  }else{
+      setFilteredData([])
+      setIsFiltered(false);
+  }
   };
 const handleDelete=(id)=>{
 
@@ -120,9 +131,9 @@ const handleDelete=(id)=>{
 
           console.log("Response:", response.data);
            if (response.status==201) {
-                          //const result = await response.json();
-                          setData((data) => [...data, response.data.data]); // Update state with the new item
-                          setFormData({ title: '' }); // Reset form inputs
+                          setData((data) => [...data, response.data.data]);
+                          setFormData({ title: '' });
+                          setSelectedDate(null);
                       } else {
                           console.error('Insert failed');
                       }
@@ -168,45 +179,82 @@ const handleDelete=(id)=>{
           </div>
           <button type="submit" className="btn btn-primary btn-lg mb-2">Add</button>
       </form>
+      <div>
       <h2 className="text-center mb-4">Todo list items</h2>
-      <table className="table table-bordered table-striped table-hover table-responsive-sm">
-          <thead className="thead-dark">
-              <tr>
-                  <th>#</th>
-                  <th>Title</th>
-                  <th>Due Date</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-              </tr>
-          </thead>
-          <tbody>
-              {data.map((item, index) => (
-                  <tr key={index}>
-                      <td>{index + 1}</td>
-                      <td>{item.title}</td>
-                      <td>{item.due}</td>
-                      <td>
-                      <select className="form-control" disabled={item.id !== editingId} onChange={(e) => setStatus(e.target.value)}>
-                        {statuses.map((status, index) => (
-                          <option key={index} value={status} selected={status === item.status}>{status}</option>
-                        ))}
-                      </select>
-                      </td>
-                      <td>
-                          <button className="btn btn-danger mx-2" onClick={() => handleDelete(item.id)}>
-                              Delete
-                          </button>
-                          <button className={editingId==item.id? 'btn btn-warning mx-2 d-none' : 'btn btn-warning mx-2 '} onClick={() => handleEdit(item.id)}>
-                              Edit
-                          </button>
-                          <button className={editingId==item.id? 'btn btn-success mx-2' : 'btn btn-warning mx-2 d-none'} onClick={() => handleUpdate(item.id)}>
-                              Update
-                          </button>
-                      </td>
-                  </tr>
-              ))}
-          </tbody>
-      </table>
+      <div className="form-group my-3">
+                    <input
+                        type="text"
+                        name="title"
+                        onChange={(e)=>handleSearch(e.target.value)}
+                        className="form-control form-control-lg"
+                        id="inputTitleSearch"
+                        placeholder="search based on title"
+                    />
+                </div>
+            <table className="table table-bordered table-striped table-hover table-responsive-sm">
+                <thead className="thead-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Title</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {isFiltered==false?data.length>0?data.map((item, index) => (
+                        <tr key={index}>
+                            <td>{index + 1}</td>
+                            <td>{item.title}</td>
+                            <td>{item.due}</td>
+                            <td>
+                            <select className="form-control" disabled={item.id !== editingId} onChange={(e) => setStatus(e.target.value)}>
+                              {statuses.map((status, index) => (
+                                <option key={index} value={status} selected={status === item.status}>{status}</option>
+                              ))}
+                            </select>
+                            </td>
+                            <td>
+                                <button className="btn btn-danger mx-2 delete_btn" onClick={() => handleDelete(item.id)}>
+                                    Delete
+                                </button>
+                                <button className={editingId==item.id? 'btn btn-warning mx-2 d-none' : 'btn btn-warning mx-2 '} onClick={() => handleEdit(item.id)}>
+                                    Edit
+                                </button>
+                                <button className={editingId==item.id? 'btn btn-success mx-2' : 'btn btn-warning mx-2 d-none'} onClick={() => handleUpdate(item.id)}>
+                                    Update
+                                </button>
+                            </td>
+                        </tr>
+                    )):<tr ><td colSpan="5">No items found.</td></tr>:filteredData.length>0?filteredData.map((item, index) => (
+                                              <tr key={index}>
+                                                  <td>{index + 1}</td>
+                                                  <td>{item.title}</td>
+                                                  <td>{item.due}</td>
+                                                  <td>
+                                                  <select className="form-control" disabled={item.id !== editingId} onChange={(e) => setStatus(e.target.value)}>
+                                                    {statuses.map((status, index) => (
+                                                      <option key={index} value={status} selected={status === item.status}>{status}</option>
+                                                    ))}
+                                                  </select>
+                                                  </td>
+                                                  <td>
+                                                      <button className="btn btn-danger mx-2 delete_btn" onClick={() => handleDelete(item.id)}>
+                                                          Delete
+                                                      </button>
+                                                      <button className={editingId==item.id? 'btn btn-warning mx-2 d-none' : 'btn btn-warning mx-2 '} onClick={() => handleEdit(item.id)}>
+                                                          Edit
+                                                      </button>
+                                                      <button className={editingId==item.id? 'btn btn-success mx-2' : 'btn btn-warning mx-2 d-none'} onClick={() => handleUpdate(item.id)}>
+                                                          Update
+                                                      </button>
+                                                  </td>
+                                              </tr>
+                                          )):<tr><td colSpan="5">No items found for this search term.</td></tr>}
+                </tbody>
+            </table>
+      </div>
+
   </div>
 
           );
