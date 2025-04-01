@@ -20,16 +20,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Install Puppeteer Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libnss3 libatk1.0-0 libx11-xcb1 libxcb-dri3-0 libdrm2
-
-      - name: Run Puppeteer Tests
-        run: npm test
-        env:
-          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
-          PUPPETEER_EXECUTABLE_PATH: "/usr/bin/google-chrome-stable"
-          
       - name: Run tests
         run: npm test
+
+        env:
+          CI: true
